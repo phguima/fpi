@@ -77,16 +77,6 @@ function prompt () {
 	 esac
 }
 
-: '
-# Check if the script is run as root
-function sudo() {
-    if [ "$UID" -ne "$ROOT_UID" ]; then
-        prompt -be "This script must be run as root. Please run 'sudo ./fpi.sh'"
-        exit 1
-    fi
-}
-'
-
 # Active sudo silent check
 function sudo_check() {
     # The last command return status is the function return
@@ -133,7 +123,7 @@ Estrutura do menu
 |- System setup
 |--- Configuration
         |------ Enable flathub
-|------ Enable RPMFusion
+        |------ Enable RPMFusion
 |------ Optimise DNF speed
 |--- System update
 |------ DNF
@@ -184,7 +174,7 @@ function menu_system() {
     prompt -bi "- Configuration"
     prompt -d "  1. Enable flathub"
     prompt -d "  2. Enable RPMFusion"
-    prompt -d "  3. Optimise DNF speed"
+    prompt -d "  3. Optimize DNF speed"
     prompt -bi "- Updates"
     prompt -d "  4. DNF"
     prompt -d "  5. Flatpak"
@@ -208,7 +198,7 @@ function enable_flatpak() {
     fi
 }
 
-#
+# Enables RPMFusion repositories
 function enable_RPMFusion() {
     prompt -bd ""
     prompt -bd "Enabling RPM Fusion default repositories..."
@@ -220,6 +210,22 @@ function enable_RPMFusion() {
         https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
     sudo dnf upgrade --refresh -y
     sudo dnf group upgrade -y core
+}
+
+# Set DNF max_parallel_downloads to 15
+function optimize_dnf() {
+    if grep -q "max_parallel_downloads" /etc/dnf/dnf.conf; then
+        prompt -bw "Already optimized (max_parallel_downloads found)"
+    else
+        prompt -bi "Applying DNF optimization..."
+
+        ensure_sudo
+
+        # The echo command puts the text into the pipe, and tee (as root) writes it to the file.
+        echo 'max_parallel_downloads=15' | sudo tee -a /etc/dnf/dnf.conf > /dev/null
+
+        prompt -bs "Optimization applied!"
+    fi
 }
 
 # Function to show nVidia installation warning
@@ -298,12 +304,31 @@ while true; do
 
                 case ${option} in
                     1)
-                        enable_flatpak
+                        if enable_flatpak; then
+                            prompt -bs "Flatpak successfully enabled. Coming back to the system menu..."
+                            sleep 4
+                        else
+                            prompt -bw "Error while enabling flatpak. Coming back to the system menu..."
+                            sleep 4
+                        fi
                         ;;
                     2)
-                        enable_RPMFusion
+                        if enable_RPMFusion; then
+                            prompt -bs "RPMFusion successfully enabled. Coming back to the system menu..."
+                            sleep 4
+                        else
+                            prompt -bw "Error while enabling RPMFusion. Coming back to the system menu..."
+                            sleep 4
+                        fi
                         ;;
                     3)
+                        if optimize_dnf; then
+                            prompt -bs "DNF system optimized. Coming back to the system menu..."
+                            sleep 4
+                        else
+                            prompt -bw "Error while optimize DNF system. Coming back to the system menu..."
+                            sleep 4
+                        fi
                         ;;
                     4)
                         ;;
@@ -312,8 +337,10 @@ while true; do
                     6)
                         ;;
                     0)
+                        break
                         ;;
                     *)
+                        break
                         ;;
                 esac
             done
