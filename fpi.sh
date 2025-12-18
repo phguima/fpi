@@ -292,28 +292,31 @@ while true; do
 
     case ${option} in
         1)
-            menu_system
-            read -p " Option: " option
+            while true; do
+                menu_system
+                read -p " Option: " option
 
-            case ${option} in
-                1)
-                    enable_flatpak
-                    ;;
-                2)
-                    ;;
-                3)
-                    ;;
-                4)
-                    ;;
-                5)
-                    ;;
-                6)
-                    ;;
-                0)
-                    ;;
-                *)
-                    ;;
-            esac
+                case ${option} in
+                    1)
+                        enable_flatpak
+                        ;;
+                    2)
+                        enable_RPMFusion
+                        ;;
+                    3)
+                        ;;
+                    4)
+                        ;;
+                    5)
+                        ;;
+                    6)
+                        ;;
+                    0)
+                        ;;
+                    *)
+                        ;;
+                esac
+            done
             ;;
         0)
             prompt -bs ">>>   Thanks for use Fedora Post Installation Script   <<<"
