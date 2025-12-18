@@ -215,11 +215,11 @@ function enable_RPMFusion() {
     prompt -bd "This is include free and nonfree releases"
 
     ensure_sudo
-    dnf install -y \
+    sudo dnf install -y \
         https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm \
         https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
-    dnf upgrade --refresh -y
-    dnf group upgrade -y core
+    sudo dnf upgrade --refresh -y
+    sudo dnf group upgrade -y core
 }
 
 # Function to show nVidia installation warning
