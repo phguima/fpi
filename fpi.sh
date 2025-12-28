@@ -134,8 +134,7 @@ function enable_flatpak() {
 # Description: Enables RPMFusion repositories
 function enable_RPMFusion() {
     prompt -db ""
-    prompt -db "Enabling RPM Fusion default repositories..."
-    prompt -db "This is include free and nonfree releases"
+    prompt -db "Enabling RPM Fusion free and nonfree repositories..."
 
     if [[ -f /etc/yum.repos.d/rpmfusion-free.repo || -f /etc/yum.repos.d/rpmfusion-nonfree.repo ]]; then
         prompt -db "RPM Fusion repositories already enabled... skipping."
@@ -156,8 +155,7 @@ function enable_RPMFusion() {
 # Description: Optimize DNF speed by setting max_parallel_downloads and fastestmirror
 function optimize_dnf() {
     prompt -db ""
-    prompt -db "Optimizing DNF speed..."
-    prompt -db "This is include max_parallel_downloads and fastestmirror flags"
+    prompt -db "Enabling 'max_parallel_downloads' and 'fastestmirror' flags"
 
     local dnf_conf="/etc/dnf/dnf.conf"
     local config_to_add=""
