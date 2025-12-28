@@ -13,23 +13,11 @@
 #   :::::: G L O B A L   V A R I A B L E S ::::::   #
 #####################################################
 
-# Global color scheme variables
-CDEF="\033[0m"                                 	        	# default color
-CCIN="\033[0;36m"                              		        # info color
-CGSC="\033[0;32m"                              		        # success color
-CRER="\033[0;31m"                              		        # error color
-CWAR="\033[0;33m"                              		        # waring color
-b_CDEF="\033[1;37m"                            		        # bold default color
-b_CCIN="\033[1;36m"                            		        # bold info color
-b_CGSC="\033[1;32m"                            		        # bold success color
-b_CRER="\033[1;31m"                            		        # bold error color
-b_CWAR="\033[1;33m"                            		        # bold warning color
-
 # Exit immediately if a command fails
-set -o errexit
+#set -o errexit
 
 # Global constants
-ROOT_UID=0
+#ROOT_UID=0
 
 # Global variables
 dnf_select=()
@@ -48,147 +36,73 @@ ms_options=()
 #   :::::: F U N C T I O N S ::::::   #
 #######################################
 
-# Set prompt function for colored messages
-function prompt () {
-	case ${1} in
-        "-d"|"--default")
-			echo -e "${CDEF}${@/-d/}${CDEF}";;          # print default message
-        "-bd"|"--default-bold")
-			echo -e "${b_CDEF}${@/-bd/}${CDEF}";;       # print bold default message
-		"-s"|"--success")
-			echo -e "${CGSC}${@/-s/}${CDEF}";;          # print success message
-        "-bs"|"--success-bold")
-			echo -e "${b_CGSC}${@/-bs/}${CDEF}";;       # print bold success message
-		"-e"|"--error")
-			echo -e "${CRER}${@/-e/}${CDEF}";;          # print error message
-        "-be"|"--error-bold")
-			echo -e "${b_CRER}${@/-be/}${CDEF}";;       # print bold error message
-		"-w"|"--warning")
-			echo -e "${CWAR}${@/-w/}${CDEF}";;          # print warning message
-        "-bw"|"--warning-bold")
-			echo -e "${b_CWAR}${@/-bw/}${CDEF}";;       # print bold warning message
-		"-i"|"--info")
-			echo -e "${CCIN}${@/-i/}${CDEF}";;          # print info message
-        "-bi"|"--info-bold")
-			echo -e "${b_CCIN}${@/-bi/}${CDEF}";;       # print boldinfo message
-		*)
-			echo -e "$@"
-		;;
-	 esac
+# Function: prompt
+# Description: Centralizes output logging with color coding using flags.
+# Usage: prompt <flag> <message>
+# Flags:
+#   -d  : Default (White)        | -db : Default Bold
+#   -i  : Info (Blue)            | -ib : Info Bold
+#   -w  : Warning (Yellow)       | -wb : Warning Bold
+#   -e  : Error (Red)            | -eb : Error Bold
+#   -g  : Debug (Cyan)           | -gb : Debug Bold
+#   -s  : Success (Green)        | -sb : Success Bold
+function prompt() {
+    local flag="$1"
+    local message="$2"
+    local C_RESET='\033[0m'
+
+    case "$flag" in
+        -d)  echo -e "\033[0;37m${message}${C_RESET}" ;;  # White
+        -db) echo -e "\033[1;37m${message}${C_RESET}" ;;  # White Bold
+        -i)  echo -e "\033[0;34m${message}${C_RESET}" ;;  # Blue
+        -ib) echo -e "\033[1;34m${message}${C_RESET}" ;;  # Blue Bold
+        -w)  echo -e "\033[0;33m${message}${C_RESET}" ;;  # Yellow
+        -wb) echo -e "\033[1;33m${message}${C_RESET}" ;;  # Yellow Bold
+        -e)  echo -e "\033[0;31m${message}${C_RESET}" ;;  # Red
+        -eb) echo -e "\033[1;31m${message}${C_RESET}" ;;  # Red Bold
+        -g)  echo -e "\033[0;36m${message}${C_RESET}" ;;  # Cyan (Debug)
+        -gb) echo -e "\033[1;36m${message}${C_RESET}" ;;  # Cyan Bold
+        -s)  echo -e "\033[0;32m${message}${C_RESET}" ;;  # Green (Success)
+        -sb) echo -e "\033[1;32m${message}${C_RESET}" ;;  # Green Bold
+        *)   echo -e "${message}" ;;                       # Fallback
+    esac
 }
 
-# Active sudo silent check
+# Function: pause
+# Description: Pauses execution until user presses Enter.
+function pause() {
+    read -rp "Press [Enter] to continue..."
+}
+
+# Function: sudo_check
+# Description: Silent check to verify if the sudo session is currently active.
+# Returns: 0 if active, non-zero otherwise.
 function sudo_check() {
-    # The last command return status is the function return
     sudo -n true 2> /dev/null
 }
 
-# Check and refresh sudo cache
+# Function: ensure_sudo
+# Description: Ensures sudo privileges are cached, prompting user if needed.
 function ensure_sudo() {
-    # Checks if the sudo timestamp is valid without prompting for a password
     while ! sudo_check; do
-        prompt -be "Sudo credentials are required to proceed."
+        prompt -eb "Sudo credentials are required to proceed."
         
-        # Ask the password to the users (3 attempts)
+        # Ask the password to the users
         sudo -v
         
-        # Check for a success sudo -v
-        # Loop while $? is not igual to 0
         if [ $? -ne 0 ]; then
-             echo "Authentication failed. Trying again (or CRTL+C to exit script)..."
+             prompt -e "Authentication failed. Trying again (or CTRL+C to exit)..."
         fi
     done
     
-    echo "Sudo activated..."
-}
-
-: '
-# Function to display usage information
-function usage() {
-    echo "Usage: $0 [OPTION]..."
-    echo "            "
-    echo "OPTIONS (assumes '-a' if no parameters is informed):"
-    echo "  -a, --all          run all update system (dnf, flatpak and fwupdmgr) [Default]"
-    echo "  -d, --dnf          run 'dnf upgrade --refresh'"
-    echo "  -f, --flatpak      run 'flatpak update'"
-    echo "  -x, --firmware     run firmware update commands (fwupdmgr)"
-    echo "  -h, --help         Show this help"
-    echo ""
-}
-'
-
-: '
-Estrutura do menu
-
-|- System setup
-|--- Configuration
-        |------ Enable flathub
-        |------ Enable RPMFusion
-|------ Optimise DNF speed
-|--- System update
-|------ DNF
-|------ Flatpak
-|------ Firmware
-|- Software setup
-|--- Install Oh-My-ZSH
-|--- Install DNF softwares
-|--- Install flatpak softwares
-|--- Install microsoft softwares
-|--- Install extras (fonts & codecs)
-|- Hardware setup
-|--- Install VA-API driver for Intel GPUs
-|--- Install VA-API and VDPAU drivers for AMD GPUs
-|--- Install NVIDIA proprietary driver (signed)
-|- Tweaks
-|--- Set hostname
-'
-
-# Header to be used with all menus
-function menu_header() {
-    clear
-    prompt -bs "+======================================+"
-    prompt -bs "        Fedora Post Installation        "
-    prompt -bs "            by Pedro Liberal            "
-    prompt -bs "                  v1.0                  "
-    prompt -bs "+======================================+"
-    prompt -bs ""
-}
-
-# fpi main menu
-function menu_main() {
-    menu_header
-    prompt -bw "Main Menu"
-    prompt -d " 1. System setup"
-    prompt -d " 2. Software setup"
-    prompt -d " 3. Hardware setup"
-    prompt -d " 4. Tweaks"
-    prompt -d " -"
-    prompt -d " 0. Quit"
-    prompt -d ""
-}
-
-# System menu
-function menu_system() {
-    menu_header
-    prompt -bw "System Menu"
-    prompt -bi "- Configuration"
-    prompt -d "  1. Enable flathub"
-    prompt -d "  2. Enable RPMFusion"
-    prompt -d "  3. Optimize DNF speed"
-    prompt -bi "- Updates"
-    prompt -d "  4. DNF"
-    prompt -d "  5. Flatpak"
-    prompt -d "  6. Firmware"
-    prompt -d "  -"
-    prompt -d "  0. Quit"
-    prompt -d ""
+    prompt -s "Sudo activated..."
 }
 
 # Enables flatpak remotes if not exist
 function enable_flatpak() {
-    prompt -bd ""
-    prompt -bd "Trying to enable flatpak remotes if not exist..."
-    prompt -bd "User password will be prompted using GUI"
+    prompt -db ""
+    prompt -db "Trying to enable flatpak remotes if not exist..."
+    prompt -db "User password will be prompted using GUI"
     sleep 1 
 
     if sudo_check; then
@@ -200,9 +114,14 @@ function enable_flatpak() {
 
 # Enables RPMFusion repositories
 function enable_RPMFusion() {
-    prompt -bd ""
-    prompt -bd "Enabling RPM Fusion default repositories..."
-    prompt -bd "This is include free and nonfree releases"
+    prompt -db ""
+    prompt -db "Enabling RPM Fusion default repositories..."
+    prompt -db "This is include free and nonfree releases"
+
+    if -f /etc/yum.repos.d/rpmfusion-free.repo || -f /etc/yum.repos.d/rpmfusion-nonfree.repo; then
+        prompt -db "RPM Fusion repositories already enabled... skipping."
+        return
+    fi
 
     ensure_sudo
     sudo dnf install -y \
@@ -214,17 +133,30 @@ function enable_RPMFusion() {
 
 # Set DNF max_parallel_downloads to 15
 function optimize_dnf() {
-    if grep -q "max_parallel_downloads" /etc/dnf/dnf.conf; then
-        prompt -bw "Already optimized (max_parallel_downloads found)"
-    else
-        prompt -bi "Applying DNF optimization..."
+    prompt -db ""
+    prompt -db "Optimizing DNF speed..."
+    prompt -db "This is include max_parallel_downloads and fastestmirror flags"
 
+    if grep -q "max_parallel_downloads" /etc/dnf/dnf.conf; then
+        prompt -db "Already optimized for max_parallel_downloads... skipping."
+    else
+        prompt -ib "Applying DNF optimization for max_parallel_downloads..."
         ensure_sudo
 
         # The echo command puts the text into the pipe, and tee (as root) writes it to the file.
         echo 'max_parallel_downloads=15' | sudo tee -a /etc/dnf/dnf.conf > /dev/null
+        prompt -sb "DNF optimization for max_parallel_downloads applied!"
+    fi
 
-        prompt -bs "Optimization applied!"
+    if grep -q "fastestmirror" /etc/dnf/dnf.conf; then
+        prompt -db "Already optimized for fastestmirror... skipping."    
+    else
+        prompt -ib "Applying DNF optimization for fastestmirror..."
+        ensure_sudo
+
+        # The echo command puts the text into the pipe, and tee (as root) writes it to the file.
+        echo 'fastestmirror=True' | sudo tee -a /etc/dnf/dnf.conf > /dev/null
+        prompt -sb "DNF optimization for fastestmirror applied!"
     fi
 }
 
@@ -289,71 +221,194 @@ function nvidia_reboot() {
     echo ""
 }
 
+
+###############################
+#   :::::: M E N U S ::::::   #
+###############################
+
+# Function: menu_header
+# Description: Header to be used with menus
+function menu_header() {
+    clear
+    prompt -bs "+======================================+"
+    prompt -bs "        Fedora Post Installation        "
+    prompt -bs "            by Pedro Liberal            "
+    prompt -bs "                  v1.0                  "
+    prompt -bs "+======================================+"
+    prompt -bs ""
+}
+
+# Function: menu_sys_config
+# Description: Submenu for System Configuration
+function menu_sys_config() {
+    while true; do
+        clear
+        menu_header
+        prompt -ib "=== System Setup > Configuration ==="
+        echo "1. Enable Flathub"
+        echo "2. Enable RPMFusion"
+        echo "3. Optimise DNF speed"
+        echo "0. Back"
+        echo ""
+        read -p "Select an option: " choice
+
+        case $choice in
+            1) prompt -i "Enabling Flathub..." ; enable_flatpak ; pause ;;
+            2) prompt -i "Enabling RPMFusion..." ; enable_RPMFusion ; pause ;;
+            3) prompt -i "Optimising DNF speed..." ; optimize_dnf ; pause ;;
+            0) break ;;
+            *) prompt -e "Invalid option." ; pause ;;
+        esac
+    done
+}
+
+# Function: menu_sys_update
+# Description: Submenu for System Update
+function menu_sys_update() {
+    while true; do
+        clear
+        menu_header
+        prompt -ib "=== System Setup > System Update ==="
+        echo "1. Update DNF"
+        echo "2. Update Flatpak"
+        echo "3. Update Firmware"
+        echo "0. Back"
+        echo ""
+        read -p "Select an option: " choice
+
+        case $choice in
+            1) prompt -i "Updating DNF..." ; pause ;;
+            2) prompt -i "Updating Flatpak..." ; pause ;;
+            3) prompt -i "Updating Firmware..." ; pause ;;
+            0) break ;;
+            *) prompt -e "Invalid option." ; pause ;;
+        esac
+    done
+}
+
+# Function: menu_system_setup
+# Description: Menu for System Setup
+function menu_system_setup() {
+    while true; do
+        clear
+        menu_header
+        prompt -ib "=== System Setup ==="
+        echo "1. Configuration"
+        echo "2. System Update"
+        echo "0. Back"
+        echo ""
+        read -p "Select an option: " choice
+
+        case $choice in
+            1) menu_sys_config ;;
+            2) menu_sys_update ;;
+            0) break ;;
+            *) prompt -e "Invalid option." ; pause ;;
+        esac
+    done
+}
+
+# Function: menu_software_setup
+# Description: Menu for Software Setup
+function menu_software_setup() {
+    while true; do
+        clear
+        menu_header
+        prompt -ib "=== Software Setup ==="
+        echo "1. Install Oh-My-ZSH"
+        echo "2. Install DNF softwares"
+        echo "3. Install Flatpak softwares"
+        echo "4. Install Microsoft softwares"
+        echo "5. Install extras (fonts & codecs)"
+        echo "0. Back"
+        echo ""
+        read -p "Select an option: " choice
+
+        case $choice in
+            1) prompt -i "Installing Oh-My-ZSH..." ; pause ;;
+            2) prompt -i "Installing DNF softwares..." ; pause ;;
+            3) prompt -i "Installing Flatpak softwares..." ; pause ;;
+            4) prompt -i "Installing Microsoft softwares..." ; pause ;;
+            5) prompt -i "Installing extras..." ; pause ;;
+            0) break ;;
+            *) prompt -e "Invalid option." ; pause ;;
+        esac
+    done
+}
+
+# Function: menu_hardware_setup
+# Description: Menu for Hardware Setup
+function menu_hardware_setup() {
+    while true; do
+        clear
+        menu_header
+        prompt -ib "=== Hardware Setup ==="
+        echo "1. Install VA-API driver for Intel GPUs"
+        echo "2. Install VA-API and VDPAU drivers for AMD GPUs"
+        echo "3. Install NVIDIA proprietary driver (signed)"
+        echo "0. Back"
+        echo ""
+        read -p "Select an option: " choice
+
+        case $choice in
+            1) prompt -i "Installing Intel drivers..." ; pause ;;
+            2) prompt -i "Installing AMD drivers..." ; pause ;;
+            3) prompt -i "Installing NVIDIA drivers..." ; pause ;;
+            0) break ;;
+            *) prompt -e "Invalid option." ; pause ;;
+        esac
+    done
+}
+
+# Function: menu_tweaks
+# Description: Menu for Tweaks
+function menu_tweaks() {
+    while true; do
+        clear
+        menu_header
+        prompt -ib "=== Tweaks ==="
+        echo "1. Set hostname"
+        echo "0. Back"
+        echo ""
+        read -p "Select an option: " choice
+
+        case $choice in
+            1) prompt -i "Setting hostname..." ; pause ;;
+            0) break ;;
+            *) prompt -e "Invalid option." ; pause ;;
+        esac
+    done
+}
+
+# Function: main_menu
+# Description: Main application menu
+function main_menu() {
+    while true; do
+        clear
+        menu_header
+        prompt -ib "=== Fedora Post Install Script ==="
+        echo "1. System setup"
+        echo "2. Software setup"
+        echo "3. Hardware setup"
+        echo "4. Tweaks"
+        echo "0. Exit"
+        echo ""
+        read -p "Select an option: " choice
+
+        case $choice in
+            1) menu_system_setup ;;
+            2) menu_software_setup ;;
+            3) menu_hardware_setup ;;
+            4) menu_tweaks ;;
+            0) prompt -s "Exiting..." ; exit 0 ;;
+            *) prompt -e "Invalid option." ; pause ;;
+        esac
+    done
+}
+
+
+
 # Main script execution
 #sudo
 
-while true; do
-    menu_main
-    read -p " Option: " option
-
-    case ${option} in
-        1)
-            while true; do
-                menu_system
-                read -p " Option: " option
-
-                case ${option} in
-                    1)
-                        if enable_flatpak; then
-                            prompt -bs "Flatpak successfully enabled. Coming back to the system menu..."
-                            sleep 4
-                        else
-                            prompt -bw "Error while enabling flatpak. Coming back to the system menu..."
-                            sleep 4
-                        fi
-                        ;;
-                    2)
-                        if enable_RPMFusion; then
-                            prompt -bs "RPMFusion successfully enabled. Coming back to the system menu..."
-                            sleep 4
-                        else
-                            prompt -bw "Error while enabling RPMFusion. Coming back to the system menu..."
-                            sleep 4
-                        fi
-                        ;;
-                    3)
-                        if optimize_dnf; then
-                            prompt -bs "DNF system optimized. Coming back to the system menu..."
-                            sleep 4
-                        else
-                            prompt -bw "Error while optimize DNF system. Coming back to the system menu..."
-                            sleep 4
-                        fi
-                        ;;
-                    4)
-                        ;;
-                    5)
-                        ;;
-                    6)
-                        ;;
-                    0)
-                        break
-                        ;;
-                    *)
-                        break
-                        ;;
-                esac
-            done
-            ;;
-        0)
-            prompt -bs ">>>   Thanks for use Fedora Post Installation Script   <<<"
-            exit 0
-            ;;
-        *)
-            exit 1
-            ;;
-    esac
-done
-
-
-
+main_menu
