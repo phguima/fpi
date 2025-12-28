@@ -175,12 +175,11 @@ function optimize_dnf() {
         prompt -db " - fastestmirror: OK"
     else
         prompt -ib " - fastestmirror: Queued for update (True)"
-        config_to_add+="fastestmirror=True\n"
+        config_to_add+="fastestmirror=True"
         needs_optimization=true
     fi
 
     if [ "$needs_optimization" = true ]; then
-        prompt -ib "Applying DNF optimizations..."
         ensure_sudo
 
         # The '-e' allows echo to interpret \n as a newline
