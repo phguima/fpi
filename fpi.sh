@@ -102,14 +102,31 @@ function ensure_sudo() {
 function enable_flatpak() {
     prompt -db ""
     prompt -db "Trying to enable flatpak remotes if not exist..."
-    prompt -db "User password will be prompted using GUI"
-    sleep 1 
 
-    if sudo_check; then
-        runuser -u $SUDO_USER -- flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+    if ! command -v flatpak &> /dev/null; then
+        prompt -wb "Flatpak is not installed. Installing via DNF..."
+        
+        ensure_sudo
+        sudo dnf install -y flatpak
+        
+        prompt -bs "Flatpak installed successfully."
+    fi
+
+    if flatpak remotes | grep -q "flathub"; then
+        prompt -sb "Flathub remote already enabled... skipping."
+        return
+    fi
+
+    prompt -ib "Adding Flathub repository..."
+
+    if sudo -n true 2>/dev/null; then
+        sudo flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
     else
+        prompt -i "Authentication required via GUI to add remote..."
         flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
     fi
+    
+    prompt -sb "Flathub enabled!"
 }
 
 # Enables RPMFusion repositories
