@@ -98,7 +98,8 @@ function ensure_sudo() {
     prompt -s "Sudo activated..."
 }
 
-# Enables flatpak remotes if not exist
+# Function: enable_flatpak
+# Description: Enables flatpak remotes if not exist
 function enable_flatpak() {
     prompt -db ""
     prompt -db "Trying to enable flatpak remotes if not exist..."
@@ -129,7 +130,8 @@ function enable_flatpak() {
     prompt -sb "Flathub enabled!"
 }
 
-# Enables RPMFusion repositories
+# Function: enable_RPMFusion
+# Description: Enables RPMFusion repositories
 function enable_RPMFusion() {
     prompt -db ""
     prompt -db "Enabling RPM Fusion default repositories..."
@@ -150,7 +152,8 @@ function enable_RPMFusion() {
     prompt -sb "RPM Fusion repositories enabled!"
 }
 
-# Set DNF max_parallel_downloads to 15
+# Function: optimize_dnf
+# Description: Optimize DNF speed by setting max_parallel_downloads and fastestmirror
 function optimize_dnf() {
     prompt -db ""
     prompt -db "Optimizing DNF speed..."
@@ -179,7 +182,8 @@ function optimize_dnf() {
     fi
 }
 
-# Function to show nVidia installation warning
+# Function: nvidia_warning
+# Description: Show nVidia installation warning and instructions
 function nvidia_warning() {
     echo ""
     echo ">>> IMPORTANT <<<"
@@ -218,6 +222,8 @@ function nvidia_warning() {
     echo ""
 }
 
+# Function: nvidia_reboot
+# Description: Show nVidia reboot instructions
 function nvidia_reboot() {
     echo ""
     echo ">>> IMPORTANT <<<"
