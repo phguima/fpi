@@ -116,6 +116,11 @@ function enable_flatpak() {
     prompt -db "Trying to enable flatpak remotes if not exist..."
 
     #if ! command -v flatpak &> /dev/null; then
+    if check_command "flatpak"; then
+        prompt -db "Flatpak is already installed... skipping."
+        return
+    fi
+
     if ! check_command "flatpak"; then
         prompt -wb "Flatpak is not installed. Installing via DNF..."
         
