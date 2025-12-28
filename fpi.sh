@@ -115,12 +115,6 @@ function enable_flatpak() {
     prompt -db ""
     prompt -db "Trying to enable flatpak remotes if not exist..."
 
-    #if ! command -v flatpak &> /dev/null; then
-    if check_command "flatpak"; then
-        prompt -db "Flatpak is already installed... skipping."
-        return
-    fi
-
     if ! check_command "flatpak"; then
         prompt -wb "Flatpak is not installed. Installing via DNF..."
         
@@ -202,6 +196,67 @@ function optimize_dnf() {
         prompt -sb "DNF configuration updated successfully!"
     else
         prompt -sb "DNF is already fully optimized."
+    fi
+}
+
+# Function: update_dnf
+# Description: Update system packages using DNF
+function update_dnf() {
+    prompt -db ""
+    prompt -ib "Starting System Update (DNF)..."
+    prompt -db "This will upgrade all system packages and refresh repositories."
+
+    ensure_sudo
+
+    if sudo dnf upgrade --refresh -y; then
+        prompt -sb "System packages updated successfully!"
+    else
+        prompt -eb "DNF update encountered errors."
+    fi
+}
+
+# Function: update_flatpak
+# Description: Update Flatpak applications
+function update_flatpak() {
+    prompt -db ""
+    prompt -ib "Starting Flatpak Update..."
+
+    if ! check_command "flatpak"; then
+        prompt -wb "Flatpak is not installed. Skipping..."
+        return
+    fi
+
+    if flatpak update -y; then
+        prompt -sb "Flatpak applications updated successfully!"
+    else
+        prompt -eb "Flatpak update encountered errors."
+    fi
+}
+
+# Function: update_firmware
+# Description: Update system firmware using fwupd
+function update_firmware() {
+    prompt -db ""
+    prompt -ib "Starting Firmware Update (fwupd)..."
+    prompt -db "Checking for supported hardware and available updates..."
+
+    if ! check_command "fwupdmgr"; then
+        prompt -wb "fwupd (fwupdmgr) is not installed. Skipping..."
+        return
+    fi
+
+    ensure_sudo
+
+    prompt -i "Refreshing firmware metadata..."
+    sudo fwupdmgr refresh --force
+
+    prompt -i "Checking for updates..."
+    if sudo fwupdmgr update; then
+        prompt -sb "Firmware operations completed."
+    else
+        # fwupdmgr can return error if no updates are available, which is normal,
+        # but here we capture real failures too.
+        prompt -wb "No firmware updates applied or an error occurred."
     fi
 }
 
@@ -325,9 +380,9 @@ function menu_sys_update() {
         read -p "Select an option: " choice
 
         case $choice in
-            1) prompt -i "Updating DNF..." ; pause ;;
-            2) prompt -i "Updating Flatpak..." ; pause ;;
-            3) prompt -i "Updating Firmware..." ; pause ;;
+            1) prompt -i "Updating DNF..." ; update_dnf ; pause ;;
+            2) prompt -i "Updating Flatpak..." ; update_flatpak ; pause ;;
+            3) prompt -i "Updating Firmware..." ; update_firmware ; pause ;;
             0) break ;;
             *) prompt -e "Invalid option." ; pause ;;
         esac
