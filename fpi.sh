@@ -203,7 +203,6 @@ function optimize_dnf() {
 # Description: Update system packages using DNF
 function update_dnf() {
     prompt -db ""
-    prompt -ib "Starting System Update (DNF)..."
     prompt -db "This will upgrade all system packages and refresh repositories."
 
     ensure_sudo
@@ -219,7 +218,7 @@ function update_dnf() {
 # Description: Update Flatpak applications
 function update_flatpak() {
     prompt -db ""
-    prompt -ib "Starting Flatpak Update..."
+    prompt -db "This will update all Flatpak applications."
 
     if ! check_command "flatpak"; then
         prompt -wb "Flatpak is not installed. Skipping..."
@@ -237,7 +236,6 @@ function update_flatpak() {
 # Description: Update system firmware using fwupd
 function update_firmware() {
     prompt -db ""
-    prompt -ib "Starting Firmware Update (fwupd)..."
     prompt -db "Checking for supported hardware and available updates..."
 
     if ! check_command "fwupdmgr"; then
@@ -380,9 +378,9 @@ function menu_sys_update() {
         read -p "Select an option: " choice
 
         case $choice in
-            1) prompt -i "Updating DNF..." ; update_dnf ; pause ;;
-            2) prompt -i "Updating Flatpak..." ; update_flatpak ; pause ;;
-            3) prompt -i "Updating Firmware..." ; update_firmware ; pause ;;
+            1) prompt -i "Starting System Update (DNF)..." ; update_dnf ; pause ;;
+            2) prompt -i "Starting Flatpak Update..." ; update_flatpak ; pause ;;
+            3) prompt -i "Starting Firmware Update (fwupd)..." ; update_firmware ; pause ;;
             0) break ;;
             *) prompt -e "Invalid option." ; pause ;;
         esac
