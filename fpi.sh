@@ -159,26 +159,35 @@ function optimize_dnf() {
     prompt -db "Optimizing DNF speed..."
     prompt -db "This is include max_parallel_downloads and fastestmirror flags"
 
-    if grep -q "max_parallel_downloads" /etc/dnf/dnf.conf; then
-        prompt -db "Already optimized for max_parallel_downloads... skipping."
-    else
-        prompt -ib "Applying DNF optimization for max_parallel_downloads..."
-        ensure_sudo
+    local dnf_conf="/etc/dnf/dnf.conf"
+    local config_to_add=""
+    local needs_optimization=false
 
-        # The echo command puts the text into the pipe, and tee (as root) writes it to the file.
-        echo 'max_parallel_downloads=15' | sudo tee -a /etc/dnf/dnf.conf > /dev/null
-        prompt -sb "DNF optimization for max_parallel_downloads applied!"
+    if grep -q "max_parallel_downloads" "$dnf_conf"; then
+        prompt -db " - max_parallel_downloads: OK"
+    else
+        prompt -ib " - max_parallel_downloads: Queued for update (15)"
+        config_to_add+="max_parallel_downloads=15\n"
+        needs_optimization=true
     fi
 
-    if grep -q "fastestmirror" /etc/dnf/dnf.conf; then
-        prompt -db "Already optimized for fastestmirror... skipping."    
+    if grep -q "fastestmirror" "$dnf_conf"; then
+        prompt -db " - fastestmirror: OK"
     else
-        prompt -ib "Applying DNF optimization for fastestmirror..."
+        prompt -ib " - fastestmirror: Queued for update (True)"
+        config_to_add+="fastestmirror=True\n"
+        needs_optimization=true
+    fi
+
+    if [ "$needs_optimization" = true ]; then
+        prompt -ib "Applying DNF optimizations..."
         ensure_sudo
 
-        # The echo command puts the text into the pipe, and tee (as root) writes it to the file.
-        echo 'fastestmirror=True' | sudo tee -a /etc/dnf/dnf.conf > /dev/null
-        prompt -sb "DNF optimization for fastestmirror applied!"
+        # The '-e' allows echo to interpret \n as a newline
+        echo -e "$config_to_add" | sudo tee -a "$dnf_conf" > /dev/null        
+        prompt -sb "DNF configuration updated successfully!"
+    else
+        prompt -sb "DNF is already fully optimized."
     fi
 }
 
