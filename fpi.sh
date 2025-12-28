@@ -118,7 +118,7 @@ function enable_RPMFusion() {
     prompt -db "Enabling RPM Fusion default repositories..."
     prompt -db "This is include free and nonfree releases"
 
-    if -f /etc/yum.repos.d/rpmfusion-free.repo || -f /etc/yum.repos.d/rpmfusion-nonfree.repo; then
+    if [[ -f /etc/yum.repos.d/rpmfusion-free.repo || -f /etc/yum.repos.d/rpmfusion-nonfree.repo ]]; then
         prompt -db "RPM Fusion repositories already enabled... skipping."
         return
     fi
