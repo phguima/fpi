@@ -98,13 +98,25 @@ function ensure_sudo() {
     prompt -s "Sudo activated..."
 }
 
+# Function: check_command
+# Description: Checks if a command exists; exits with error if not found.
+function check_command() {
+    local cmd="$1"
+    echo "$cmd"
+
+    if command -v "$cmd" &> /dev/null; then
+        return  0
+    fi
+}
+
 # Function: enable_flatpak
 # Description: Enables flatpak remotes if not exist
 function enable_flatpak() {
     prompt -db ""
     prompt -db "Trying to enable flatpak remotes if not exist..."
 
-    if ! command -v flatpak &> /dev/null; then
+    #if ! command -v flatpak &> /dev/null; then
+    if ! check_command "flatpak"; then
         prompt -wb "Flatpak is not installed. Installing via DNF..."
         
         ensure_sudo
